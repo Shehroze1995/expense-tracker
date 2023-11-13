@@ -2,16 +2,20 @@ import { useState } from "react";
 import { useGetUserInfo } from "../hooks/useGetUserInfo";
 import { useAddTransaction } from "../hooks/useAddTransaction";
 import { useGetTransactions } from "../hooks/useGetTransactions";
-import { FaUserAlt } from "react-icons/fa";
-import { formattedAmount } from "../components/formattedAmount";
 import { auth } from "../config/firebase";
 import { Navigate, useNavigate } from "react-router-dom";
 import { signOut } from "firebase/auth";
+import { AiFillCaretDown } from "react-icons/ai";
+import DropDown from "../components/DropDown";
+import AddTransaction from "../components/AddTransaction";
+import TransactionsDetails from "../components/TransactionsDetails";
+import { FaUserCircle } from "react-icons/fa";
 
 const ExpenseTracker = () => {
   const [description, setDescription] = useState("");
   const [transactionAmount, setTransactionAmount] = useState("");
   const [transactionType, setTransactionType] = useState("expense");
+  const [isAccountOpen, setIsAccountOpen] = useState(false);
 
   const navigate = useNavigate();
 
@@ -27,13 +31,6 @@ const ExpenseTracker = () => {
   }
 
   const { totalBalance, totalExpense, totalIncome } = transactionsTotal;
-
-  const emptyTransactions = (
-    <p className="my-4 text-gray-400 text-xl">
-      Transactions list is empty <br />
-      Add transaction above
-    </p>
-  );
 
   const handleTransaction = (e) => {
     e.preventDefault();
@@ -53,150 +50,89 @@ const ExpenseTracker = () => {
     }
   };
 
+  const handleDropDown = (e) => {
+    if (e.target.classList.contains("dropDown"))
+      setIsAccountOpen(!isAccountOpen);
+    else if (e.target.classList.contains("dropDownOpened"))
+      setIsAccountOpen(true);
+    else setIsAccountOpen(false);
+  };
+
+  let UsDollar = new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+  });
+
   return (
     <>
-      <main className="w-11/12 m-auto max-w-7xl">
-        <section className="flex flex-wrap justify-between my-4 gap-y-4">
-          <div>
-            <h1 className="text-4xl">Welcome {userName}</h1>
-            <div className="border-2 border-blue-500 w-3/4 m-auto"></div>
-          </div>
-          <div className="flex flex-col items-center gap-2 ml-auto">
-            {userImg ? (
-              <img
-                className="w-20 h-20 object-contain rounded-full"
-                src={userImg}
-                alt={userName}
+      <section onClick={handleDropDown} className="bg-[#1C2C4F] py-3 main">
+        <div className="flex items-center justify-between w-11/12 m-auto max-w-7xl font-extrabold">
+          <h2 className="text-5xl font-sans">Track.</h2>
+          <div className="flex items-center gap-2">
+            <p className="text-2xl max-[500px]:hidden">{userName}</p>
+            <div className="relative">
+              <button
+                className="flex items-center gap-1 border border-gray-500 rounded-lg py-1 px-2 transition-all duration-300 hover:bg-blue-900 dropDown"
+                title="Account"
+                type="button"
+              >
+                {userImg ? (
+                  <img
+                    className="w-8 rounded-full dropDown"
+                    src={userImg}
+                    alt={userName}
+                  />
+                ) : (
+                  <FaUserCircle className="text-3xl dropDown" />
+                )}
+                <AiFillCaretDown className="dropDown" />
+              </button>
+              <DropDown
+                isAccountOpen={isAccountOpen}
+                handleSignout={handleSignout}
               />
-            ) : (
-              <FaUserAlt className="text-5xl" />
-            )}
+            </div>
+          </div>
+        </div>
+      </section>
+      <h3 className="text-right text-xl w-11/12 m-auto max-w-7xl mt-2 min-[500px]:hidden">
+        Welcome {userName}
+      </h3>
 
-            <button
-              onClick={handleSignout}
-              className="bg-blue-500 py-1 px-4 text-xl rounded-2xl"
-              type="button"
-            >
-              Sign out
-            </button>
-          </div>
-        </section>
-        <section className="text-2xl font-extrabold">
-          <article className="flex gap-2">
+      <main
+        onClick={() => setIsAccountOpen(false)}
+        className="w-11/12 m-auto max-w-7xl py-16"
+      >
+        <section className="text-2xl font-extrabold grid gridCard gap-4 mb-8">
+          <article className=" border border-gray-600 p-4">
             <p className="text-blue-500">Your Balance:</p>
-            {totalBalance < 0 ? (
-              <p>-${formattedAmount(totalBalance * -1)}</p>
-            ) : (
-              <p>${formattedAmount(totalBalance)}</p>
-            )}
+            <p className="break-words">{UsDollar.format(totalBalance)}</p>
           </article>
-          <article className="flex gap-2">
+          <article className=" border border-gray-600 p-4">
             <p className="text-green-500">Your Income:</p>
-            <p>${formattedAmount(totalIncome)}</p>
+            <p className="break-words">{UsDollar.format(totalIncome)}</p>
           </article>
-          <article className="flex gap-2">
+          <article className=" border border-gray-600 p-4">
             <p className="text-red-500">Your Expenses:</p>
-            <p>${formattedAmount(totalExpense)}</p>
+            <p className="break-words">{UsDollar.format(totalExpense)}</p>
           </article>
         </section>
-        <form onSubmit={handleTransaction} className="mt-12 mb-8 text-xl">
-          <div className="flex gap-4 flex-wrap text-black">
-            <input
-              onChange={(e) => setDescription(e.target.value)}
-              value={description}
-              className="w-full max-w-xs py-1 px-4 rounded-2xl outline-none"
-              placeholder="description.."
-              type="text"
-              required
-            />
-            <input
-              onChange={(e) => setTransactionAmount(e.target.value)}
-              value={transactionAmount}
-              className="w-full max-w-xs py-1 px-4 rounded-2xl outline-none"
-              placeholder="amount.."
-              min={1}
-              max={999999999999999}
-              type="number"
-              required
-            />
-          </div>
-          <div className="flex gap-4 my-3">
-            <p>Type:</p>
-            <section className="flex gap-3 flex-wrap">
-              <div className="flex items-center gap-1">
-                <input
-                  onChange={(e) => setTransactionType(e.target.value)}
-                  checked={transactionType === "expense"}
-                  className="w-5 h-5 -mt-[1px]"
-                  type="radio"
-                  name="expense"
-                  value={`expense`}
-                  id="expense"
-                />
-                <label htmlFor="expense">Expense</label>
-              </div>
-              <div className="flex items-center gap-1">
-                <input
-                  onChange={(e) => setTransactionType(e.target.value)}
-                  checked={transactionType === "income"}
-                  value={`income`}
-                  className="w-5 h-5 -mt-[1px]"
-                  type="radio"
-                  name="income"
-                  id="income"
-                />
-                <label htmlFor="income">Income</label>
-              </div>
-            </section>
-          </div>
-          <button
-            className="border py-1 px-4 bg-black rounded-md transition-all duration-300 hover:bg-white hover:text-black"
-            type="submit"
-          >
-            Add Transaction
-          </button>
-        </form>
-        <section className="text-xl">
-          <h2 className="text-2xl underline">Transactions</h2>
-          <div>
-            {transactions.length == 0
-              ? emptyTransactions
-              : transactions.map((transaction, index) => {
-                  const {
-                    description,
-                    transactionID,
-                    transactionAmount,
-                    transactionType,
-                  } = transaction;
-                  return (
-                    <article className="my-6 capitalize" key={transactionID}>
-                      <p>
-                        {index + 1} - {description}
-                      </p>
-                      <p>
-                        ${formattedAmount(transactionAmount)} -{" "}
-                        <span
-                          className={`${
-                            transactionType === "expense"
-                              ? "text-red-500"
-                              : "text-green-500"
-                          }`}
-                        >
-                          {transactionType}
-                        </span>
-                      </p>
-                      <button
-                        onClick={() => deleteTransaction(transactionID)}
-                        className="text-blue-400 underline "
-                        type="button"
-                      >
-                        Remove
-                      </button>
-                    </article>
-                  );
-                })}
-          </div>
-        </section>
+
+        <AddTransaction
+          setDescription={setDescription}
+          description={description}
+          handleTransaction={handleTransaction}
+          setTransactionType={setTransactionType}
+          transactionType={transactionType}
+          setTransactionAmount={setTransactionAmount}
+          transactionAmount={transactionAmount}
+        />
+
+        <TransactionsDetails
+          transactions={transactions}
+          UsDollar={UsDollar}
+          deleteTransaction={deleteTransaction}
+        />
       </main>
     </>
   );

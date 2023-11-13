@@ -50,7 +50,7 @@ const Login = () => {
         className="flex items-center justify-center h-[calc(100vh-74px)]"
       >
         <button
-          className="bg-[#222] text-white rounded-3xl text-3xl py-2 px-6 flex items-center gap-2 transition-all duration-300 hover:bg-gray-700"
+          className="bg-[#222] text-white rounded-3xl text-3xl py-2 px-6 flex items-center gap-2 transition-all duration-300 hover:bg-gray-700 max-[330px]:text-2xl"
           type="submit"
         >
           <span>
